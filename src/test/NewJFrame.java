@@ -97,8 +97,9 @@ public class NewJFrame extends javax.swing.JFrame {
     private void jLabel1MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel1MouseClicked
         panel.setContentType("text/html");
         HTMLDocument doc =(HTMLDocument) panel.getDocument();
+        String imgsrc ="<img src='C:\\Users\\mrahn\\Desktop\\meme.jpg'/>";
         Icon icon = new ImageIcon(NewJFrame.class.getResource("/icon/smile.png"));
-        String msg = "<img src='"+icon+"'></img>";
+        String msg = "<p align='right'>"+imgsrc+"</p>";
         HTMLEditorKit editorKit = (HTMLEditorKit)panel.getEditorKit();
         try {
           editorKit.insertHTML(doc, doc.getLength(), msg, 0, 0, null);
@@ -112,7 +113,7 @@ public class NewJFrame extends javax.swing.JFrame {
     private void jLabel2MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel2MouseClicked
 //        panel.setContentType("text/html");
         HTMLDocument doc =(HTMLDocument) panel.getDocument();
-        String msg = "<p>ohayo</p>";
+        String msg = "<p style='color: blue;'>ohayo</p>";
         HTMLEditorKit editorKit = (HTMLEditorKit)panel.getEditorKit();
         try {
           editorKit.insertHTML(doc, doc.getLength(), msg, 0, 0, null);

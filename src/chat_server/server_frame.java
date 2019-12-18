@@ -34,7 +34,7 @@ public class server_frame extends javax.swing.JFrame
        @Override
        public void run() 
        {
-            String message, connect = "Connect", disconnect = "Disconnect", chat = "Chat" ;
+            String message, connect = "Connect", disconnect = "Disconnect", chat = "Chat",image= "Image" ;
             String[] data;
 
             try 
@@ -61,6 +61,10 @@ public class server_frame extends javax.swing.JFrame
                     } 
                     else if (data[2].equals(chat)) 
                     {
+                        tellEveryone(message);
+                    }
+                    else if (data[2].equalsIgnoreCase(image)) 
+                    {   
                         tellEveryone(message);
                     } 
                     else 
