@@ -27,6 +27,9 @@ public class client_frame extends javax.swing.JFrame
     
     Socket sock;
     BufferedReader reader;
+    ObjectOutputStream oout;
+    OutputStream os;
+    InputStream is;
     PrintWriter writer;
     static String replacePath = "╰☆☆ĨMÁĞĔ☆☆╮";
     //--------------------------//
@@ -73,10 +76,9 @@ public class client_frame extends javax.swing.JFrame
     public void appendImage(JTextPane msgPanel, String msg){
         msgPanel.setContentType("text/html");
         String sender = msg.split(":")[0];
-        String getPath = msg.substring(msg.indexOf(":")+1).replace(replacePath, ":").trim();
-        String getPathAbsolute = getPath.substring(1,getPath.length()-1);
-        Icon iconImg = new ImageIcon(getPathAbsolute);
-        msg = "<img src='"+iconImg+"'></img>";
+        String icon = msg.split(":")[1].trim();
+        Icon iconImg = new ImageIcon(client_frame.class.getResource("/image/"+ icon));
+        msg = "<div style='width: 20%'><img  src='"+iconImg+"'></img></div>";
         if(sender.equals(username))
         {   
             msg = "<h3 align='right'>"+ msg +"</h3>"; //  xoa ten nguoi gui          style='background-color: #ffc0cb;'
@@ -98,7 +100,6 @@ public class client_frame extends javax.swing.JFrame
         } catch(Exception e){
           e.printStackTrace();
         }
-        System.out.println(getPathAbsolute);
     }
     public void userAdd(String data) 
     {
@@ -165,8 +166,7 @@ public class client_frame extends javax.swing.JFrame
     public client_frame() 
     {
         initComponents();
-        ta_chat.setMargin(new Insets(15,15,15,15));
-        
+        ta_chat.setMargin(new Insets(15,15,15,15));   
     }
     
     //--------------------------//
@@ -174,11 +174,12 @@ public class client_frame extends javax.swing.JFrame
     public class IncomingReader implements Runnable
     {
         @Override
-        public void run() 
+        public synchronized void run() 
         {
             String[] data;
-            String stream, done = "Done", connect = "Connect", disconnect = "Disconnect", chat = "Chat", image ="Image";
-
+            String stream, done = "Done", connect = "Connect", disconnect = "Disconnect", chat = "Chat", image ="Image", file = "File";
+            String serverDis = "ServerDisconnect";
+            String fileReceive;
             try 
             {
                 while ((stream = reader.readLine()) != null) 
@@ -213,14 +214,30 @@ public class client_frame extends javax.swing.JFrame
                                 appendMessage(ta_chat, MsgAndSender);
                                 break;
                         }
-//                        String MsgAndSender = data[0] + ": " + data[1] + "\n";
-//                        appendMessage(jTextPane1, MsgAndSender);
-//                        ta_chat.append(data[0] + ": " + data[1] + "\n");
-//                        ta_chat.setCaretPosition(ta_chat.getDocument().getLength());
                      } 
                      else if(data[2].equalsIgnoreCase(image)){
                          String MsgAndSender = data[0] + ": " + data[1] + "\n";
                          appendImage(ta_chat, MsgAndSender);
+                         System.out.println("ádasd");
+
+                     }
+                     else if(data[2].equalsIgnoreCase(file) ){
+//                         && !data[0].equals(username)
+                         System.out.println("File receive");
+                         String ObjButtons[] = {"Yes","No"};
+                         int result = JOptionPane.showOptionDialog(null,"Are you sure you want to save file?", "Send file", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, ObjButtons, ObjButtons[1]);
+                         byte dataByte[] = new byte[is.available()];
+                         is.read(dataByte,0,dataByte.length);
+                          FileOutputStream fr = new FileOutputStream("C:\\Users\\mrahn\\Desktop\\Nam 4\\Do an 3\\nhanfile\\"+data[1]);
+                             fr.write(dataByte,0,dataByte.length);
+                             fr.flush();
+//                         if(result == JOptionPane.YES_OPTION ){
+//                             FileOutputStream fr = new FileOutputStream("C:\\Users\\mrahn\\Desktop\\Nam 4\\Do an 3\\nhanfile\\"+data[1]);
+//                             fr.write(dataByte,0,dataByte.length);
+//                             fr.flush();
+////                             fr.close();
+//                         }
+                
                      }
                      else if (data[2].equals(connect))
                      {
@@ -230,7 +247,10 @@ public class client_frame extends javax.swing.JFrame
                      else if (data[2].equals(disconnect)) 
                      {
                          userRemove(data[0]);
-                     } 
+                     }
+                     else if (data[2].equals(serverDis)){
+                         System.out.println("serverdis");
+                     }
                      else if (data[2].equals(done)) 
                      {
                         //users.setText("");
@@ -271,6 +291,7 @@ public class client_frame extends javax.swing.JFrame
         scared = new javax.swing.JLabel();
         heart_eye = new javax.swing.JLabel();
         send_img = new javax.swing.JLabel();
+        send_file = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         ta_chat = new javax.swing.JTextPane();
 
@@ -403,6 +424,13 @@ public class client_frame extends javax.swing.JFrame
             }
         });
 
+        send_file.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icon/attachment.png"))); // NOI18N
+        send_file.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                send_fileMouseClicked(evt);
+            }
+        });
+
         javax.swing.GroupLayout jpIconLayout = new javax.swing.GroupLayout(jpIcon);
         jpIcon.setLayout(jpIconLayout);
         jpIconLayout.setHorizontalGroup(
@@ -431,22 +459,25 @@ public class client_frame extends javax.swing.JFrame
                         .addComponent(b_send, javax.swing.GroupLayout.DEFAULT_SIZE, 85, Short.MAX_VALUE))
                     .addGroup(jpIconLayout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(send_img))))
+                        .addComponent(send_img)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(send_file))))
         );
         jpIconLayout.setVerticalGroup(
             jpIconLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jpIconLayout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jpIconLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(jpIconLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                        .addComponent(scared)
-                        .addComponent(smile_big)
-                        .addComponent(icon_smile)
-                        .addComponent(sad)
-                        .addComponent(crying)
-                        .addComponent(heart_eye)
-                        .addComponent(smile_cry))
-                    .addComponent(send_img))
+                .addGroup(jpIconLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jpIconLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(scared, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(smile_big, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(icon_smile, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(sad, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(crying, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(heart_eye, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(smile_cry, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(send_img, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(send_file))
                 .addGap(21, 21, 21)
                 .addGroup(jpIconLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(tf_chat, javax.swing.GroupLayout.PREFERRED_SIZE, 44, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -553,6 +584,8 @@ public class client_frame extends javax.swing.JFrame
                 sock = new Socket(address, port);
                 InputStreamReader streamreader = new InputStreamReader(sock.getInputStream());
                 reader = new BufferedReader(streamreader);
+                is = sock.getInputStream();
+                os = sock.getOutputStream();
                 writer = new PrintWriter(sock.getOutputStream());
                 writer.println(username + ":has connected.:Connect");
                 writer.flush(); 
@@ -600,6 +633,8 @@ public class client_frame extends javax.swing.JFrame
                 sock = new Socket(address, port);
                 InputStreamReader streamreader = new InputStreamReader(sock.getInputStream());
                 reader = new BufferedReader(streamreader);
+                this.is = sock.getInputStream();
+                os = sock.getOutputStream();
                 writer = new PrintWriter(sock.getOutputStream());
                 writer.println(anon + ":has connected.:Connect");
                 writer.flush(); 
@@ -734,10 +769,17 @@ public class client_frame extends javax.swing.JFrame
             else{                
                 String filepath = chosenFile.getAbsolutePath();
                 String[] filePathSpilit = filepath.split(":");
+                String nameFile = chosenFile.getName();
                  try {
-                    String send = username + ":<" + filePathSpilit[0]+replacePath+filePathSpilit[1] + ">:" + "Image";
+                    String send = username + ":" + nameFile + ":" + "Image";
                     writer.println(send);
                     writer.flush(); // flushes the buffer
+                    FileInputStream fis = new FileInputStream(chosenFile);
+                    byte data[]= new byte[fis.available()];
+                    fis.read(data,0,data.length);
+                    os = sock.getOutputStream();
+                    os.write(data,0,data.length);
+                    os.flush();
                  } catch (Exception ex) {
                     String failed =  "Message was not sent. \n";
                     appendMessage(ta_chat, failed);
@@ -747,6 +789,27 @@ public class client_frame extends javax.swing.JFrame
             Logger.getLogger(client_frame.class.getName()).log(Level.SEVERE, null, ex);
         }
     }//GEN-LAST:event_send_imgMouseClicked
+
+    private void send_fileMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_send_fileMouseClicked
+        JFileChooser chooser= new JFileChooser();
+        int choice = chooser.showOpenDialog(b_send);
+        if (choice != JFileChooser.APPROVE_OPTION) return;
+        File chosenFile = chooser.getSelectedFile();
+        try {
+           String send = username + ":" + chosenFile.getName() + ":" + "File";
+           writer.println(send);
+           writer.flush(); // flushes the buffer
+           FileInputStream fis = new FileInputStream(chosenFile);
+           byte data[]= new byte[fis.available()];
+           fis.read(data,0,data.length);
+           os = sock.getOutputStream();
+           os.write(data,0,data.length);
+           os.flush();
+        } catch (Exception ex) {
+           String failed =  "Message was not sent. \n";
+           appendMessage(ta_chat, failed);
+        }
+    }//GEN-LAST:event_send_fileMouseClicked
 
     public static void main(String args[]) 
     {
@@ -777,6 +840,7 @@ public class client_frame extends javax.swing.JFrame
     private javax.swing.JLabel lb_username;
     private javax.swing.JLabel sad;
     private javax.swing.JLabel scared;
+    private javax.swing.JLabel send_file;
     private javax.swing.JLabel send_img;
     private javax.swing.JLabel smile_big;
     private javax.swing.JLabel smile_cry;

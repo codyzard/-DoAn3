@@ -2,27 +2,35 @@ package chat_server;
 
 import java.io.*;
 import java.net.*;
+import java.nio.file.Paths;
 import java.util.*;
+import javax.swing.ImageIcon;
 
 public class server_frame extends javax.swing.JFrame 
 {
    ArrayList clientOutputStreams;
+   ArrayList clientFile;
    ArrayList<String> users;
-
+   public static ServerSocket ss;
    public class ClientHandler implements Runnable	
    {
        BufferedReader reader;
        Socket sock;
        PrintWriter client;
-
-       public ClientHandler(Socket clientSocket, PrintWriter user) 
+       InputStream is;
+       OutputStream os;
+       public ClientHandler(Socket clientSocket, PrintWriter user, InputStream is, OutputStream os) 
        {
             client = user;
+            this.is = is;
+            this.os = os;
             try 
             {
                 sock = clientSocket;
                 InputStreamReader isReader = new InputStreamReader(sock.getInputStream());
                 reader = new BufferedReader(isReader);
+                is = sock.getInputStream();
+                os = sock.getOutputStream();
             }
             catch (Exception ex) 
             {
@@ -32,11 +40,11 @@ public class server_frame extends javax.swing.JFrame
        }
 
        @Override
-       public void run() 
+       public synchronized void run() 
        {
-            String message, connect = "Connect", disconnect = "Disconnect", chat = "Chat",image= "Image" ;
+            String message, connect = "Connect", disconnect = "Disconnect", chat = "Chat",image= "Image", file = "File" ;
             String[] data;
-
+            String nameImg= "";
             try 
             {
                 while ((message = reader.readLine()) != null) 
@@ -64,22 +72,44 @@ public class server_frame extends javax.swing.JFrame
                         tellEveryone(message);
                     }
                     else if (data[2].equalsIgnoreCase(image)) 
-                    {   
+                    {
                         tellEveryone(message);
-                    } 
+                        synchronized(this){
+                            nameImg = data[1];
+                            byte dataByte[] = new byte[is.available()];
+                            FileOutputStream fr = new FileOutputStream("C:\\Users\\mrahn\\Documents\\NetBeansProjects\\ChatApp\\src\\image\\"+data[1]);
+                            is.read(dataByte,0, dataByte.length);
+                            fr.write(dataByte,0,dataByte.length);
+                            fr.close();
+                        }
+
+//                        GhiAnh(data[1]);
+                       
+                    }
+                    else if (data[2].equalsIgnoreCase(file)){
+                        tellEveryone(message);
+                        byte dataByte[] = new byte[is.available()];
+                        is.read(dataByte,0, dataByte.length);
+                        sendEveryOne(dataByte);
+//                        FileOutputStream fr = new FileOutputStream("C:\\Users\\mrahn\\Desktop\\Nam 4\\Do an 3\\nhanfile\\"+data[1]);
+//                        fr.write(dataByte);
+
+                    }
                     else 
                     {
                         ta_chat.append("No Conditions were met. \n");
                     }
                 } 
+                
              } 
              catch (Exception ex) 
              {
                 ta_chat.append("Lost a connection. \n");
                 ex.printStackTrace();
                 clientOutputStreams.remove(client);
+                clientFile.remove(os);
              } 
-	} 
+	}
     }
 
     public server_frame() 
@@ -185,13 +215,12 @@ public class server_frame extends javax.swing.JFrame
     private void b_endActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_b_endActionPerformed
         try 
         {
-            Thread.sleep(5000);                 //5000 milliseconds is five second.
+            Thread.sleep(2000);                 //5000 milliseconds is five second.
         } 
         catch(InterruptedException ex) {Thread.currentThread().interrupt();}
         
-        tellEveryone("Server:is stopping and all users will be disconnected.\n:Chat");
+        tellEveryone("Server:is stopping and all users will be disconnected.\n:Disconnect");
         ta_chat.append("Server stopping... \n");
-        
         ta_chat.setText("");
     }//GEN-LAST:event_b_endActionPerformed
 
@@ -233,25 +262,29 @@ public class server_frame extends javax.swing.JFrame
         public void run() 
         {
             clientOutputStreams = new ArrayList();
+            clientFile = new ArrayList();
             users = new ArrayList();  
 
             try 
             {
                 ServerSocket serverSock = new ServerSocket(2222);
-
                 while (true) 
                 {
-				Socket clientSock = serverSock.accept();
-				PrintWriter writer = new PrintWriter(clientSock.getOutputStream());
-				clientOutputStreams.add(writer);
-
-				Thread listener = new Thread(new ClientHandler(clientSock, writer));
-				listener.start();
-				ta_chat.append("Got a connection. \n");
+                    Socket clientSock = serverSock.accept();
+                    PrintWriter writer = new PrintWriter(clientSock.getOutputStream());
+                    InputStream is  = clientSock.getInputStream();
+                    OutputStream os = clientSock.getOutputStream();
+                    clientOutputStreams.add(writer);
+                    clientFile.add(os);
+                    Thread listener = new Thread(new ClientHandler(clientSock, writer,is,os));
+                    listener.start();
+                    ta_chat.append("Got a connection. \n");
                 }
+                
             }
             catch (Exception ex)
-            {
+            {   
+                
                 ta_chat.append("Error making a connection. \n");
             }
         }
@@ -288,11 +321,9 @@ public class server_frame extends javax.swing.JFrame
         }
         tellEveryone(done);
     }
-    
     public void tellEveryone(String message) 
     {
 	Iterator it = clientOutputStreams.iterator();
-
         while (it.hasNext()) 
         {
             try 
@@ -302,6 +333,26 @@ public class server_frame extends javax.swing.JFrame
 		ta_chat.append("Sending: " + message + "\n");
                 writer.flush();
                 ta_chat.setCaretPosition(ta_chat.getDocument().getLength());
+
+            } 
+            catch (Exception ex) 
+            {
+		ta_chat.append("Error telling everyone. \n");
+            }
+        } 
+    }
+    public void sendEveryOne(byte dataByte[]) 
+    { 
+	Iterator it = clientFile.iterator();
+        while (it.hasNext()) 
+        {
+            try 
+            {
+                OutputStream os = (OutputStream) it.next();
+		os.write(dataByte,0,dataByte.length);
+		ta_chat.append("Sending: " + "file" + "\n");
+                os.flush();
+//                ta_chat.setCaretPosition(ta_chat.getDocument().getLength());
 
             } 
             catch (Exception ex) 
