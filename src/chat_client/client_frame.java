@@ -22,7 +22,7 @@ public class client_frame extends javax.swing.JFrame
 {
     String username, address = "localhost";
     ArrayList<String> users = new ArrayList();
-    int port = 2222;
+    int port = 1050;
     Boolean isConnected = false;
     
     Socket sock;
@@ -174,7 +174,7 @@ public class client_frame extends javax.swing.JFrame
     public class IncomingReader implements Runnable
     {
         @Override
-        public synchronized void run() 
+        public void run() 
         {
             String[] data;
             String stream, done = "Done", connect = "Connect", disconnect = "Disconnect", chat = "Chat", image ="Image", file = "File";
@@ -216,21 +216,28 @@ public class client_frame extends javax.swing.JFrame
                         }
                      } 
                      else if(data[2].equalsIgnoreCase(image)){
-                         String MsgAndSender = data[0] + ": " + data[1] + "\n";
-                         appendImage(ta_chat, MsgAndSender);
-                         System.out.println("ádasd");
-
+                         synchronized(this){
+                            String MsgAndSender = data[0] + ": " + data[1] + "\n";
+                            appendImage(ta_chat, MsgAndSender);
+                         }
                      }
                      else if(data[2].equalsIgnoreCase(file) ){
 //                         && !data[0].equals(username)
                          System.out.println("File receive");
                          String ObjButtons[] = {"Yes","No"};
-                         int result = JOptionPane.showOptionDialog(null,"Are you sure you want to save file?", "Send file", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, ObjButtons, ObjButtons[1]);
+                         int result = JOptionPane.showOptionDialog(null,data[0]+ " send file to you, receive?", "Send file", JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE, null, ObjButtons, ObjButtons[1]);
                          byte dataByte[] = new byte[is.available()];
                          is.read(dataByte,0,dataByte.length);
-                          FileOutputStream fr = new FileOutputStream("C:\\Users\\mrahn\\Desktop\\Nam 4\\Do an 3\\nhanfile\\"+data[1]);
+                         if(result == JOptionPane.YES_OPTION){
+                             FileOutputStream fr = new FileOutputStream("C:\\Users\\mrahn\\Desktop\\Nam 4\\Do an 3\\nhanfile\\"+data[1]);
                              fr.write(dataByte,0,dataByte.length);
                              fr.flush();
+                             fr.close();
+                             dataByte = null;
+                             String MsgAndSender = data[0] + ": Send file " + data[1] + "\n";
+                             appendMessage(ta_chat, MsgAndSender );
+                         }
+                          
 //                         if(result == JOptionPane.YES_OPTION ){
 //                             FileOutputStream fr = new FileOutputStream("C:\\Users\\mrahn\\Desktop\\Nam 4\\Do an 3\\nhanfile\\"+data[1]);
 //                             fr.write(dataByte,0,dataByte.length);
@@ -775,7 +782,7 @@ public class client_frame extends javax.swing.JFrame
                     writer.println(send);
                     writer.flush(); // flushes the buffer
                     FileInputStream fis = new FileInputStream(chosenFile);
-                    byte data[]= new byte[fis.available()];
+                    byte data[]= new byte[1000000];
                     fis.read(data,0,data.length);
                     os = sock.getOutputStream();
                     os.write(data,0,data.length);
@@ -800,11 +807,12 @@ public class client_frame extends javax.swing.JFrame
            writer.println(send);
            writer.flush(); // flushes the buffer
            FileInputStream fis = new FileInputStream(chosenFile);
-           byte data[]= new byte[fis.available()];
+           byte data[]= new byte[1000000];
            fis.read(data,0,data.length);
            os = sock.getOutputStream();
            os.write(data,0,data.length);
            os.flush();
+           data = null;
         } catch (Exception ex) {
            String failed =  "Message was not sent. \n";
            appendMessage(ta_chat, failed);

@@ -40,7 +40,7 @@ public class server_frame extends javax.swing.JFrame
        }
 
        @Override
-       public synchronized void run() 
+       public void run() 
        {
             String message, connect = "Connect", disconnect = "Disconnect", chat = "Chat",image= "Image", file = "File" ;
             String[] data;
@@ -76,11 +76,12 @@ public class server_frame extends javax.swing.JFrame
                         tellEveryone(message);
                         synchronized(this){
                             nameImg = data[1];
-                            byte dataByte[] = new byte[is.available()];
+                            byte dataByte[] = new byte[1000000];
                             FileOutputStream fr = new FileOutputStream("C:\\Users\\mrahn\\Documents\\NetBeansProjects\\ChatApp\\src\\image\\"+data[1]);
                             is.read(dataByte,0, dataByte.length);
                             fr.write(dataByte,0,dataByte.length);
                             fr.close();
+                            dataByte = null;
                         }
 
 //                        GhiAnh(data[1]);
@@ -88,7 +89,7 @@ public class server_frame extends javax.swing.JFrame
                     }
                     else if (data[2].equalsIgnoreCase(file)){
                         tellEveryone(message);
-                        byte dataByte[] = new byte[is.available()];
+                        byte dataByte[] = new byte[1000000];
                         is.read(dataByte,0, dataByte.length);
                         sendEveryOne(dataByte);
 //                        FileOutputStream fr = new FileOutputStream("C:\\Users\\mrahn\\Desktop\\Nam 4\\Do an 3\\nhanfile\\"+data[1]);
@@ -267,7 +268,7 @@ public class server_frame extends javax.swing.JFrame
 
             try 
             {
-                ServerSocket serverSock = new ServerSocket(2222);
+                ServerSocket serverSock = new ServerSocket(1050);
                 while (true) 
                 {
                     Socket clientSock = serverSock.accept();

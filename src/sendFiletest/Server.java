@@ -20,13 +20,12 @@ public class Server {
     public static void main(String[] args) throws IOException {
         ServerSocket ss = new ServerSocket(5000);
         Socket s = ss.accept();
-        File f = new File ("C:\\Users\\mrahn\\Desktop\\meme.jpg");
+        File f = new File ("C:\\Users\\mrahn\\Desktop\\blank-icon-13.png");
         System.out.println(f.length());
         FileInputStream fr = new FileInputStream(f);
-        byte data[] = new byte[100000000];
+        byte data[] = new byte[20002];
         fr.read(data, 0, data.length);
         OutputStream os = s.getOutputStream();
         os.write(data,0,data.length);
-        System.out.println("cc");
     }
 }

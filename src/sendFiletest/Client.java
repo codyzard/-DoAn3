@@ -18,9 +18,8 @@ public class Client {
     public static void main(String[] args) throws IOException {
           Socket s = new Socket("localhost",5000);
           InputStream is = s.getInputStream();
-          byte data[] = new byte[100000];
-//          Byte bt = 
-          FileOutputStream fr = new FileOutputStream("H:\\meme.jpg");
+          byte data[] = new byte[20002];
+          FileOutputStream fr = new FileOutputStream("H:\\pro.png");
           is.read(data,0, data.length);
           fr.write(data,0,data.length);
     
